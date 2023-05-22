@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"leebee.io/planner/rest/plan"
 )
@@ -16,21 +15,9 @@ func main() {
 			log.Panic(r)
 		}
 	}()
-	loc, err := time.LoadLocation("Asia/Seoul")
-	if err != nil {
-		panic(err)
-	}
-	if loc == nil {
-		fmt.Println("haha")
-	}
-	p := plan.NewPlan()
-	p.SetStartTime(2023, 5, 17, 14, 0, 0, 0, loc)
-	p.SetEndTime(2023, 5, 17, 15, 0, 0, 0, loc)
-	p.SetContent("Test 짜보기")
-	p1 := plan.NewPlan()
-	p1.SetStartTime(2023, 5, 17, 14, 0, 0, 0, loc)
-	p1.SetEndTime(2023, 5, 17, 15, 0, 0, 0, loc)
-	p1.SetContent("Test 짜보기")
+
+	p := plan.NewPlan("2023-05-17T14:00:00Z", "2023-05-17T15:00:00Z", "Test 짜보기")
+	p1 := plan.NewPlan("2023-05-18T15:21:00Z", "2023-05-18T19:32:00Z", "haha")
 	fmt.Println(p, p1)
 	// err := http.ListenAndServe(":8080", nil)
 }
