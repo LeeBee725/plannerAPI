@@ -12,6 +12,13 @@ import (
 
 var plans = map[uint32]*plan.Plan{}
 
+func jsonContentTypeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	log.SetPrefix("\033[32mLOG::\033[0m")
 	defer func() {
@@ -21,7 +28,9 @@ func main() {
 		}
 	}()
 
-	http.HandleFunc("/plans/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	planHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Print(r.Method, " ", r.URL)
 		switch r.Method {
 		case http.MethodGet:
@@ -67,7 +76,9 @@ func main() {
 		}
 	})
 
-	err := http.ListenAndServe(":8080", nil)
+	mux.Handle("/plans/", jsonContentTypeMiddleware(planHandler))
+
+	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		panic(err)
 	}
