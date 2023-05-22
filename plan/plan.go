@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 )
@@ -12,6 +13,13 @@ type Plan struct {
 	start   time.Time
 	end     time.Time
 	content string
+}
+
+type PlanJson struct {
+	Id      uint32 `json:"id"`
+	Start   string `json:"start_time"`
+	End     string `json:"end_time"`
+	Content string `json:"content"`
 }
 
 func newPlan() *Plan {
@@ -53,6 +61,10 @@ func newDate(dateString string) (t time.Time, err error) {
 	return
 }
 
+func (p Plan) Id() uint32 {
+	return p.id
+}
+
 func (p Plan) StartTime() string {
 	return p.start.String()
 }
@@ -79,4 +91,32 @@ func (p *Plan) SetContent(content string) {
 
 func (p Plan) String() string {
 	return strconv.FormatUint(uint64(p.id), 10) + " " + p.Content() + " " + p.start.String() + " ~ " + p.end.String()
+}
+
+func (p *Plan) MarshalJSON() ([]byte, error) {
+	return json.Marshal(PlanJson{
+		Id:      p.id,
+		Start:   p.StartTime(),
+		End:     p.EndTime(),
+		Content: p.content,
+	})
+}
+
+func (p *Plan) UnmarshalJSON(b []byte) error {
+	temp := &PlanJson{}
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+	var err error
+	p.id = temp.Id
+	p.start, err = newDate(temp.Start)
+	if err != nil {
+		return err
+	}
+	p.end, err = newDate(temp.End)
+	if err != nil {
+		return err
+	}
+	p.content = temp.Content
+	return nil
 }
