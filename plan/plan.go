@@ -16,21 +16,20 @@ type Plan struct {
 }
 
 type PlanJson struct {
-	Id      uint32 `json:"id"`
 	Start   string `json:"start_time"`
 	End     string `json:"end_time"`
 	Content string `json:"content"`
 }
 
-func newPlan() *Plan {
+func NewPlan() *Plan {
 	var p Plan
-	p.id = global_id + 1
 	global_id++
+	p.id = global_id
 	return &p
 }
 
 func newPlanParam(start, end time.Time, content string) (p *Plan) {
-	p = newPlan()
+	p = NewPlan()
 	p.SetStartTime(start.Year(), start.Month(), start.Day(),
 		start.Hour(), start.Minute(), start.Second(), start.Nanosecond(), start.Location())
 	p.SetEndTime(end.Year(), end.Month(), end.Day(),
@@ -39,7 +38,7 @@ func newPlanParam(start, end time.Time, content string) (p *Plan) {
 	return p
 }
 
-func NewPlan(start, end, content string) (p *Plan) {
+func NewPlanParam(start, end, content string) (p *Plan) {
 	startDate, err := newDate(start)
 	if err != nil {
 		panic(err)
@@ -95,7 +94,6 @@ func (p Plan) String() string {
 
 func (p *Plan) MarshalJSON() ([]byte, error) {
 	return json.Marshal(PlanJson{
-		Id:      p.id,
 		Start:   p.StartTime(),
 		End:     p.EndTime(),
 		Content: p.content,
@@ -108,7 +106,6 @@ func (p *Plan) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	var err error
-	p.id = temp.Id
 	p.start, err = newDate(temp.Start)
 	if err != nil {
 		return err
