@@ -26,7 +26,7 @@ func main() {
 		switch r.Method {
 		case http.MethodGet:
 			s := strings.Split(r.URL.Path, "/")
-			if len(s) > 4 {
+			if len(s) != 3 {
 				http.Error(w, "Not found", 404)
 				break
 			}
@@ -43,6 +43,26 @@ func main() {
 			p := plan.NewPlan()
 			json.NewDecoder(r.Body).Decode(p)
 			plans[p.Id()] = p
+			json.NewEncoder(w).Encode(p)
+		case http.MethodPut:
+			s := strings.Split(r.URL.Path, "/")
+			if len(s) != 3 || s[2] == "" {
+				http.Error(w, "Not found", 404)
+				break
+			}
+			id, err := strconv.ParseUint(s[2], 10, 32)
+			if err != nil {
+				panic(err)
+			}
+			p := plans[uint32(id)]
+			var newP plan.Plan
+			err = json.NewDecoder(r.Body).Decode(&newP)
+			if err != nil {
+				panic(err)
+			}
+			log.Print(newP)
+			p.Update(newP)
+			log.Print(p)
 			json.NewEncoder(w).Encode(p)
 		}
 	})

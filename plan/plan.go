@@ -52,6 +52,9 @@ func NewPlanParam(start, end, content string) (p *Plan) {
 }
 
 func newDate(dateString string) (t time.Time, err error) {
+	if dateString == "" {
+		return t, err
+	}
 	loc, err := time.LoadLocation("Asia/Seoul")
 	if err != nil {
 		return t, err
@@ -116,4 +119,17 @@ func (p *Plan) UnmarshalJSON(b []byte) error {
 	}
 	p.content = temp.Content
 	return nil
+}
+
+func (p *Plan) Update(newP Plan) {
+	var temp Plan
+	if temp.start != newP.start {
+		p.start = newP.start
+	}
+	if temp.end != newP.end {
+		p.end = newP.end
+	}
+	if temp.content != newP.content {
+		p.content = newP.content
+	}
 }
