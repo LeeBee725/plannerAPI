@@ -1,21 +1,64 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
+	"github.com/gin-gonic/gin"
 	"leebee.io/planner/rest/plan"
 )
 
 var plans = map[uint32]*plan.Plan{}
 
-func jsonContentTypeMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
+func getAllPlansHandler(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, plans)
+}
+
+func getPlanByIdHandler(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	ctx.JSON(http.StatusOK, plans[uint32(id)])
+}
+
+func createPlanHandler(ctx *gin.Context) {
+	plan := plan.NewPlan()
+	if err := ctx.ShouldBindJSON(plan); err != nil {
+		log.Println("err: ", err)
+		ctx.AbortWithStatus(http.StatusBadRequest)
+	}
+	log.Printf("user: %+v\n", plan)
+
+	plans[plan.Id()] = plan
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+		"data":   plan,
+	})
+}
+
+func updatePlanHandler(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	var plan plan.Plan
+	if err := ctx.ShouldBindJSON(&plan); err != nil {
+		log.Println("err: ", err)
+		ctx.AbortWithStatus(http.StatusBadRequest)
+	}
+	log.Printf("user: %+v\n", plan)
+
+	plans[uint32(id)].Update(plan)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+		"data":   plans[uint32(id)],
 	})
 }
 
@@ -28,58 +71,12 @@ func main() {
 		}
 	}()
 
-	mux := http.NewServeMux()
+	r := gin.Default()
+	plans := r.Group("/plans")
+	plans.GET("", getAllPlansHandler)
+	plans.GET("/:id", getPlanByIdHandler)
+	plans.POST("", createPlanHandler)
+	plans.PUT("/:id", updatePlanHandler)
 
-	planHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Print(r.Method, " ", r.URL)
-		switch r.Method {
-		case http.MethodGet:
-			s := strings.Split(r.URL.Path, "/")
-			if len(s) != 3 {
-				http.Error(w, "Not found", 404)
-				break
-			}
-			if s[2] == "" {
-				json.NewEncoder(w).Encode(plans)
-				break
-			}
-			id, err := strconv.ParseUint(s[2], 10, 32)
-			if err != nil {
-				panic(err)
-			}
-			json.NewEncoder(w).Encode(plans[uint32(id)])
-		case http.MethodPost:
-			p := plan.NewPlan()
-			json.NewDecoder(r.Body).Decode(p)
-			plans[p.Id()] = p
-			json.NewEncoder(w).Encode(p)
-		case http.MethodPut:
-			s := strings.Split(r.URL.Path, "/")
-			if len(s) != 3 || s[2] == "" {
-				http.Error(w, "Not found", 404)
-				break
-			}
-			id, err := strconv.ParseUint(s[2], 10, 32)
-			if err != nil {
-				panic(err)
-			}
-			p := plans[uint32(id)]
-			var newP plan.Plan
-			err = json.NewDecoder(r.Body).Decode(&newP)
-			if err != nil {
-				panic(err)
-			}
-			log.Print(newP)
-			p.Update(newP)
-			log.Print(p)
-			json.NewEncoder(w).Encode(p)
-		}
-	})
-
-	mux.Handle("/plans/", jsonContentTypeMiddleware(planHandler))
-
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	r.Run()
 }
