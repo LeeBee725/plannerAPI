@@ -9,7 +9,7 @@ import (
 var global_id uint32 = 0
 
 type Plan struct {
-	id      uint32
+	id      uint64
 	start   time.Time
 	end     time.Time
 	content string
@@ -77,6 +77,10 @@ func (p Plan) EndTime() string {
 
 func (p Plan) Content() string {
 	return p.content
+}
+
+func (p *Plan) SetId(id uint64) {
+	p.id = id
 }
 
 func (p *Plan) SetStartTime(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.Location) {
