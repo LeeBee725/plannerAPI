@@ -12,6 +12,7 @@ import (
 var plans = map[uint32]*plan.Plan{}
 
 func getAllPlansHandler(ctx *gin.Context) {
+	log.Printf("plan: %+v\n", plans)
 	ctx.JSON(http.StatusOK, plans)
 }
 
@@ -21,6 +22,7 @@ func getPlanByIdHandler(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("plan: %+v\n", plans[uint32(id)])
 	ctx.JSON(http.StatusOK, plans[uint32(id)])
 }
 
@@ -30,7 +32,7 @@ func createPlanHandler(ctx *gin.Context) {
 		log.Println("err: ", err)
 		ctx.AbortWithStatus(http.StatusBadRequest)
 	}
-	log.Printf("user: %+v\n", plan)
+	log.Printf("plan: %+v\n", plan)
 
 	plans[plan.Id()] = plan
 
@@ -52,7 +54,7 @@ func updatePlanHandler(ctx *gin.Context) {
 		log.Println("err: ", err)
 		ctx.AbortWithStatus(http.StatusBadRequest)
 	}
-	log.Printf("user: %+v\n", plan)
+	log.Printf("plan: %+v\n", plan)
 
 	plans[uint32(id)].Update(plan)
 
